@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+    <script type="module">
+        // Import the functions you need from the Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
+            authDomain: "catering-webapp.firebaseapp.com",
+            projectId: "catering-webapp",
+            storageBucket: "catering-webapp.appspot.com",
+            messagingSenderId: "249720880975",
+            appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Function to register a user
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('registrationForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent form from submitting
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                // Clear any previous error message
+                document.getElementById('error-message').textContent = '';
+
+                // Validate passwords
+                if (password !== confirmPassword) {
+                    document.getElementById('error-message').textContent = "Passwords do not match!";
+                    return;
+                }
+
+                // Use Firebase to create a new user
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        // Signed in successfully
+                        alert("Registration successful! Now logging you in...");
+
+                        // Automatically log in the user
+                        signInWithEmailAndPassword(auth, email, password)
+                            .then((userCredential) => {
+                                alert("Login successful! Welcome " + userCredential.user.email);
+                                console.log("Logged in: ", userCredential.user);
+                            })
+                            .catch((error) => {
+                                // Error during login
+                                const loginErrorMessage = error.message;
+                                document.getElementById('error-message').textContent = loginErrorMessage;
+                                console.error("Error during login: ", error);
+                            });
+                    })
+                    .catch((error) => {
+                        const errorMessage = error.message;
+                        document.getElementById('error-message').textContent = errorMessage;
+                        console.error("Error during registration: ", error);
+                    });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h2>Register</h2>
+    <form id="registrationForm">
+        <label for="email">Email:</label>
+        <input type="email" id="email" required><br><br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" required><br><br>
+
+        <label for="confirmPassword">Confirm Password:</label>
+        <input type="password" id="confirmPassword" required><br><br>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p id="error-message" style="color:red;"></p>
+</body>
+</html>
