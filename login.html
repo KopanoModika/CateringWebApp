@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <title>Registration Page</title>
     <script type="module">
         // Import the necessary Firebase functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-        // Your Firebase configuration (Replace with your Firebase project credentials)
+        // Your Firebase configuration (replace with your own Firebase credentials)
         const firebaseConfig = {
             apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
             authDomain: "catering-webapp.firebaseapp.com",
@@ -22,45 +23,83 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app); // Firestore for storing user details
 
-        // Function to log in a user
+        // Function to register a user
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('loginForm').addEventListener('submit', function(event) {
+            document.getElementById('registrationForm').addEventListener('submit', function(event) {
                 event.preventDefault(); // Prevent form from submitting
 
+                // Get form values
+                const name = document.getElementById('name').value;
+                const surname = document.getElementById('surname').value;
+                const phone = document.getElementById('phone').value;
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
 
                 // Clear any previous error message
                 document.getElementById('error-message').textContent = '';
 
-                // Firebase authentication: Sign in the user
-                signInWithEmailAndPassword(auth, email, password)
+                // Validate passwords
+                if (password !== confirmPassword) {
+                    document.getElementById('error-message').textContent = "Passwords do not match!";
+                    return;
+                }
+
+                // Firebase Authentication: Create a new user
+                createUserWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
-                        // Signed in successfully
-                        alert("Login successful! Welcome back, " + userCredential.user.email);
-                        console.log("User logged in: ", userCredential.user);
+                        // User registration successful
+                        alert("Registration successful!");
+
+                        const user = userCredential.user;
+
+                        // Store additional user details in Firestore
+                        return setDoc(doc(db, "users", user.uid), {
+                            uid: user.uid,
+                            name: name,
+                            surname: surname,
+                            phone: phone,
+                            email: email
+                        });
+                    })
+                    .then(() => {
+                        // Successfully stored in Firestore
+                        alert("User details stored successfully.");
                     })
                     .catch((error) => {
                         // Error handling
                         const errorMessage = error.message;
                         document.getElementById('error-message').textContent = errorMessage;
-                        console.error("Error during login: ", error);
+                        console.error("Error during registration or Firestore update: ", error);
                     });
             });
         });
     </script>
 </head>
 <body>
-    <h2>Login</h2>
-    <form id="loginForm">
+    <h2>Register</h2>
+    <form id="registrationForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required><br><br>
+
+        <label for="surname">Surname:</label>
+        <input type="text" id="surname" required><br><br>
+
+        <label for="phone">Phone Number:</label>
+        <input type="tel" id="phone" required><br><br>
+
         <label for="email">Email:</label>
         <input type="email" id="email" required><br><br>
 
         <label for="password">Password:</label>
         <input type="password" id="password" required><br><br>
 
-        <button type="submit">Login</button>
+        <label for="confirmPassword">Confirm Password:</label>
+        <input type="password" id="confirmPassword" required><br><br>
+
+        <button type="submit">Register</button>
     </form>
 
     <p id="error-message" style="color:red;"></p>
