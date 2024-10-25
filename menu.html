@@ -45,7 +45,7 @@
                    </div>
 
                    <h3>R80.00</h3>
-                   <a href="coming soon.html" class="menu_btn" id="btn_platter1">Order Now</a>
+                   <button onclick="addToCart('Platter 1', 80)">Order Now</button>
                 </div>
 
                 <div class="menu_card">
@@ -59,7 +59,7 @@
                    </div>
 
                    <h3>R90.00</h3>
-                   <a href="coming soon.html" class="menu_btn" id="bt_platter2">Order Now</a>
+                   <button onclick="addToCart('Platter 2', 90)">Order Now</button>
                 </div>
 
                 <div class="menu_card">
@@ -133,10 +133,92 @@
                 </div>
 
             </div>
+
+            <div id="cartPopup" class="popup">
+                <div class="popup-content">
+                    <h1>Your Cart</h1>
+                    <ul id="cartItems"></ul>
+                    <p>Total: R<span id="totalAmount">0</span></p>
+                    <button id="checkoutButton">Checkout</button>
+                    <button onclick="closeCart()">Close</button>
+                </div>
+            </div>
+        
+            <!-- Firebase SDKs -->
+            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-app.js"></script>
+            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-database.js"></script>
         </div>
     
     <br><br>
-    
+    <script>
+        // Initialize Firebase
+const firebaseConfig = {
+    apiKey: "your_api_key",
+    authDomain: "your_auth_domain",
+    databaseURL: "your_database_url",
+    projectId: "your_project_id",
+    storageBucket: "your_storage_bucket",
+    messagingSenderId: "your_messaging_sender_id",
+    appId: "your_app_id"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+let cart = {};
+
+function addToCart(itemName, price) {
+    if (!cart[itemName]) {
+        cart[itemName] = { quantity: 1, price };
+    } else {
+        cart[itemName].quantity += 1;
+    }
+    updateCartDisplay();
+    updateFirebaseDatabase();
+}
+
+function removeFromCart(itemName) {
+    if (cart[itemName]) {
+        cart[itemName].quantity -= 1;
+        if (cart[itemName].quantity <= 0) delete cart[itemName];
+    }
+    updateCartDisplay();
+    updateFirebaseDatabase();
+}
+
+function updateCartDisplay() {
+    const cartItems = document.getElementById("cartItems");
+    const totalAmount = document.getElementById("totalAmount");
+    cartItems.innerHTML = '';
+    let total = 0;
+
+    for (let item in cart) {
+        const { quantity, price } = cart[item];
+        total += quantity * price;
+        cartItems.innerHTML += `<li>${item} - R${price} x ${quantity}
+                                 <button onclick="removeFromCart('${item}')">Remove</button></li>`;
+    }
+
+    totalAmount.textContent = total.toFixed(2);
+}
+
+function updateFirebaseDatabase() {
+    firebase.database().ref("cart").set(cart);
+}
+
+function openCart() {
+    document.getElementById("cartPopup").classList.add("show");
+}
+
+function closeCart() {
+    document.getElementById("cartPopup").classList.remove("show");
+}
+
+document.getElementById("checkoutButton").onclick = function() {
+    alert("Proceeding to checkout!");
+    closeCart();
+};
+
+    </script>
 </body>
 <footer>
         <p>&copy; 2024 Code Crafters</p>

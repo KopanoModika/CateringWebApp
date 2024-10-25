@@ -263,3 +263,23 @@ form button:hover {
     color: #f8983d;
   }
   
+  .popup {
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: none;
+}
+.popup-content {
+    background-color: white;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 30%;
+}
+.show {
+    display: block;
+}
