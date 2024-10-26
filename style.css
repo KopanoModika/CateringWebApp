@@ -283,3 +283,37 @@ form button:hover {
 .show {
     display: block;
 }
+
+/* Style for the "View Cart" Button */
+#viewCartButton {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    background-color: #ff6f61; /* Use a color that matches your brand */
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, background-color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+#viewCartButton i {
+    margin-right: 8px; /* Spacing between icon and text */
+    font-size: 20px;
+}
+
+#viewCartButton:hover {
+    background-color: #ff4d4d; /* Slightly darker shade on hover */
+    transform: scale(1.05);
+}
+
+#viewCartButton:active {
+    transform: scale(0.95);
+}
+
