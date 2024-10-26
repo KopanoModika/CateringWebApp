@@ -264,21 +264,34 @@ form button:hover {
   }
   
   .popup {
+    display: none;
     position: fixed;
-    z-index: 1;
-    left: 0;
     top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    display: none;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
 }
+
+.popup.show {
+    display: flex;
+}
+
 .popup-content {
     background-color: white;
-    margin: 10% auto;
     padding: 20px;
-    border: 1px solid #888;
-    width: 30%;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.cart-btn {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
 }
 .show {
     display: block;
