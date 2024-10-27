@@ -242,6 +242,28 @@ form button:hover {
   nav ul li a:hover {
     color: #fac031;
   }
+
+  
+header nav ul li a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    padding: 10px 20px;
+    transition: background-color 0.3s;
+    border-radius: 5px;
+}
+
+header nav ul li a:hover {
+    background-color: #f8983d;
+}
+
+/* Responsive Navigation for Small Screens */
+@media (max-width: 768px) {
+    header nav ul {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
   
   /* Main content styles */
   main {
