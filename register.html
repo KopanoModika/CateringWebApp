@@ -6,7 +6,7 @@
     <title>Registration</title>
     <link rel="stylesheet" href="style.css">
     <header>
-        <h1>Register</h1>
+        
         <nav>
             <ul>
                 <li><a href="index.html">Home</a></li>
@@ -95,7 +95,10 @@
 </head>
 <br><br>
 <body>
-    
+    <center><h1>Register</h1></center> 
+    <br>
+    <center><p>Please fill in your details to proceed</p></center>
+    <br>
     <form id="registrationForm">
         <label for="name">Name:</label>
         <input type="text" id="name" placeholder="John"><br><br>
@@ -116,6 +119,10 @@
         <input type="password" id="confirmPassword" placeholder="confirm password" required><br><br>
 
         <button type="submit">Register</button>
+        <div class="main_btn">
+                <a href="menu.html">Order Now</a>
+                <i class="fa-solid fa-angle-right"></i>
+            </div>
     </form>
 
     <p id="error-message" style="color:red;"></p>

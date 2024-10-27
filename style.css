@@ -330,3 +330,21 @@ form button:hover {
     transform: scale(0.95);
 }
 
+.btn {
+    padding: 10px 20px;
+    background-color: #4CAF50; /* Green background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+.btn:focus {
+    outline: none;
+}
