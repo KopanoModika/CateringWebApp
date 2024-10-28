@@ -351,3 +351,8 @@ header nav ul li a:hover {
 .popup-content ul{
     list-style: none; 
 }
+
+.popup-remove{
+    background-color: #007bff;
+    text-decoration: none;
+}
