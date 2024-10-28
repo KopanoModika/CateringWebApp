@@ -141,6 +141,30 @@ document.addEventListener('DOMContentLoaded', () => {
      <p id="error-message" style="color:red;"></p>
    </div>
    
+   <style>
+    .notification-bubble {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        color: white;
+        background-color: #333;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 1000;
+    }
+    .notification-bubble.show {
+        opacity: 1;
+    }
+    .notification-bubble.success {
+        background-color: #4CAF50;
+    }
+    .notification-bubble.error {
+        background-color: #f44336;
+    }
+</style>
 </body>
 <br><br><br><br><br><br>
 <footer>
