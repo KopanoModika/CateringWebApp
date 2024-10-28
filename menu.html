@@ -209,22 +209,28 @@
         updateFirebaseDatabase();
         auth.currentUser && updateFirestoreOrder(auth.currentUser.uid);
     }
-
     function updateCartDisplay() {
-        const cartItems = document.getElementById("cartItems");
-        const totalAmount = document.getElementById("totalAmount");
-        cartItems.innerHTML = '';
-        let total = 0;
+    const cartItems = document.getElementById("cartItems");
+    const totalAmount = document.getElementById("totalAmount");
+    const checkoutButton = document.getElementById("checkoutButton");
+    cartItems.innerHTML = '';
+    let total = 0;
+    let hasItems = false;
 
-        for (let item in cart) {
-            const { quantity, price } = cart[item];
-            total += quantity * price;
-            cartItems.innerHTML += `<li>${item} - R${price} x ${quantity}
-                                     <button onclick="removeFromCart('${item}')">Remove</button></li>`;
-        }
-
-        totalAmount.textContent = total.toFixed(2);
+    for (let item in cart) {
+        const { quantity, price } = cart[item];
+        total += quantity * price;
+        hasItems = true;
+        cartItems.innerHTML += `<li>${item} - R${price} x ${quantity}
+                                 <button onclick="removeFromCart('${item}')">Remove</button></li>`;
     }
+
+    totalAmount.textContent = total.toFixed(2);
+    
+    // Enable checkout button only if the cart has items
+    checkoutButton.disabled = !hasItems;
+}
+
 
     function updateFirebaseDatabase() {
         firebase.database().ref("cart").set(cart);
