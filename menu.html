@@ -148,81 +148,106 @@
             </div>
         
             <!-- Firebase SDKs -->
-            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-app.js"></script>
-            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-database.js"></script>
-            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-auth.js"></script>
-
+            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-app-compat.js"></script>
+            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-database-compat.js"></script>
+            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-auth-compat.js"></script>
+            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-firestore-compat.js"></script>
+            
         </div>
     
     <br><br>
     <script>
-        // Initialize Firebase
-const firebaseConfig = {
-   apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
-  authDomain: "catering-webapp.firebaseapp.com",
-  databaseURL: "https://catering-webapp-default-rtdb.firebaseio.com",
-  projectId: "catering-webapp",
-  storageBucket: "catering-webapp.appspot.com",
-  messagingSenderId: "249720880975",
-  appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
-};
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+         // Initialize Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
+        authDomain: "catering-webapp.firebaseapp.com",
+        databaseURL: "https://catering-webapp-default-rtdb.firebaseio.com",
+        projectId: "catering-webapp",
+        storageBucket: "catering-webapp.appspot.com",
+        messagingSenderId: "249720880975",
+        appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const firestore = firebase.firestore();
+    const auth = firebase.auth();
 
-let cart = {};
+    let cart = {};
 
-function addToCart(itemName, price) {
-    if (!cart[itemName]) {
-        cart[itemName] = { quantity: 1, price };
-    } else {
-        cart[itemName].quantity += 1;
-    }
-    updateCartDisplay();
-    updateFirebaseDatabase();
-}
+    // Check if user is logged in
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.querySelectorAll(".menu_btn").forEach(btn => btn.disabled = false);
+        } else {
+            document.querySelectorAll(".menu_btn").forEach(btn => btn.disabled = true);
+        }
+    });
 
-function removeFromCart(itemName) {
-    if (cart[itemName]) {
-        cart[itemName].quantity -= 1;
-        if (cart[itemName].quantity <= 0) delete cart[itemName];
-    }
-    updateCartDisplay();
-    updateFirebaseDatabase();
-}
-
-function updateCartDisplay() {
-    const cartItems = document.getElementById("cartItems");
-    const totalAmount = document.getElementById("totalAmount");
-    cartItems.innerHTML = '';
-    let total = 0;
-
-    for (let item in cart) {
-        const { quantity, price } = cart[item];
-        total += quantity * price;
-        cartItems.innerHTML += `<li>${item} - R${price} x ${quantity}
-                                 <button onclick="removeFromCart('${item}')">Remove</button></li>`;
+    function addToCart(itemName, price) {
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                if (!cart[itemName]) {
+                    cart[itemName] = { quantity: 1, price };
+                } else {
+                    cart[itemName].quantity += 1;
+                }
+                updateCartDisplay();
+                updateFirebaseDatabase();
+                updateFirestoreOrder(user.uid);
+            } else {
+                alert("Please log in to add items to the cart.");
+            }
+        });
     }
 
-    totalAmount.textContent = total.toFixed(2);
-}
+    function removeFromCart(itemName) {
+        if (cart[itemName]) {
+            cart[itemName].quantity -= 1;
+            if (cart[itemName].quantity <= 0) delete cart[itemName];
+        }
+        updateCartDisplay();
+        updateFirebaseDatabase();
+        auth.currentUser && updateFirestoreOrder(auth.currentUser.uid);
+    }
 
-function updateFirebaseDatabase() {
-    firebase.database().ref("cart").set(cart);
-}
+    function updateCartDisplay() {
+        const cartItems = document.getElementById("cartItems");
+        const totalAmount = document.getElementById("totalAmount");
+        cartItems.innerHTML = '';
+        let total = 0;
 
-function openCart() {
-    document.getElementById("cartPopup").classList.add("show");
-}
+        for (let item in cart) {
+            const { quantity, price } = cart[item];
+            total += quantity * price;
+            cartItems.innerHTML += `<li>${item} - R${price} x ${quantity}
+                                     <button onclick="removeFromCart('${item}')">Remove</button></li>`;
+        }
 
-function closeCart() {
-    document.getElementById("cartPopup").classList.remove("show");
-}
+        totalAmount.textContent = total.toFixed(2);
+    }
 
-document.getElementById("checkoutButton").onclick = function() {
-    alert("Proceeding to checkout!");
-    closeCart();
-};
+    function updateFirebaseDatabase() {
+        firebase.database().ref("cart").set(cart);
+    }
 
+    function updateFirestoreOrder(userId) {
+        firestore.collection("orders").doc(userId).set({ cart })
+            .then(() => console.log("Order saved to Firestore."))
+            .catch(error => console.error("Error saving order:", error));
+    }
+
+    function openCart() {
+        document.getElementById("cartPopup").classList.add("show");
+    }
+
+    function closeCart() {
+        document.getElementById("cartPopup").classList.remove("show");
+    }
+
+    document.getElementById("checkoutButton").onclick = function() {
+        alert("Proceeding to checkout!");
+        closeCart();
+    };
     </script>
 </body>
 <footer>
