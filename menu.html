@@ -140,8 +140,11 @@
             <div id="cartPopup" class="popup">
                 <div class="popup-content">
                     <h2>Your Cart</h2>
-                    <h3>Proceed to place your order</h3>
+                    <br>
+                    <h4>Proceed to place your order</h4>
+                    <br>
                     <ul id="cartItems"></ul>
+                    <br>
                     <p>Total: R<span id="totalAmount">0</span></p>
                     <button id="checkoutButton" class="btn">Checkout</button>
                     <button onclick="closeCart()" class="btn">Close</button>
@@ -223,7 +226,7 @@
         total += quantity * price;
         hasItems = true;
         cartItems.innerHTML += `<li>${item} - R${price} x ${quantity}
-                                 <button onclick="removeFromCart('${item}')">Remove</button></li>`;
+                                 <button onclick="removeFromCart('${item}')">remove item</button></li>`;
     }
 
     totalAmount.textContent = total.toFixed(2);
