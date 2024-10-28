@@ -151,7 +151,7 @@
             <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-app-compat.js"></script>
             <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-database-compat.js"></script>
             <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-auth-compat.js"></script>
-            <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-firestore-compat.js"></script>
+            <!--<script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-firestore-compat.js"></script>-->
             
         </div>
     
@@ -169,7 +169,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    const firestore = firebase.firestore();
+   // const firestore = firebase.firestore();
     const auth = firebase.auth();
 
     let cart = {};
@@ -193,7 +193,7 @@
                 }
                 updateCartDisplay();
                 updateFirebaseDatabase();
-                updateFirestoreOrder(user.uid);
+                updateFirebaseDatabase(user.uid);
             } else {
                 alert("Please log in to add items to the cart.");
             }
@@ -207,7 +207,7 @@
         }
         updateCartDisplay();
         updateFirebaseDatabase();
-        auth.currentUser && updateFirestoreOrder(auth.currentUser.uid);
+        auth.currentUser && updateFirebaseDatabase(auth.currentUser.uid);
     }
     function updateCartDisplay() {
     const cartItems = document.getElementById("cartItems");
