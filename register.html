@@ -5,27 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registration</title>
     <link rel="stylesheet" href="style.css">
-    <header>
-        
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="menu.html">Menu</a></li>
-                <li><a href="bookings.html">Bookings</a></li>
-                <li><a href="login.html">Login</a></li>
-                <li><a href="register.html">Register</a></li>   
-            </ul>
-                
-            </ul>
-        </nav>
-    </header>
+
     <script type="module">
-        // Import the necessary Firebase functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-        // Your Firebase configuration (replace with your own Firebase credentials)
         const firebaseConfig = {
             apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
             authDomain: "catering-webapp.firebaseapp.com",
@@ -35,17 +20,14 @@
             appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app); // Firestore for storing user details
+        const db = getFirestore(app);
 
-        // Function to register a user
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('registrationForm').addEventListener('submit', function(event) {
-                event.preventDefault(); // Prevent form from submitting
+                event.preventDefault();
 
-                // Get form values
                 const name = document.getElementById('name').value;
                 const surname = document.getElementById('surname').value;
                 const phone = document.getElementById('phone').value;
@@ -53,25 +35,21 @@
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
 
-                // Clear any previous error message
                 document.getElementById('error-message').textContent = '';
 
-                // Validate passwords
                 if (password !== confirmPassword) {
                     document.getElementById('error-message').textContent = "Passwords do not match!";
                     return;
                 }
 
-                // Firebase Authentication: Create a new user
                 createUserWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
-                        // User registration successful
                         alert("Registration successful!");
 
                         const user = userCredential.user;
 
-                        // Store additional user details in Firestore
-                        return setDoc(doc(db, "users", user.uid), {
+                        // Store additional user details in the 'users' collection in Firestore
+                        return setDoc(doc(collection(db, "users"), user.uid), {
                             uid: user.uid,
                             name: name,
                             surname: surname,
@@ -80,11 +58,9 @@
                         });
                     })
                     .then(() => {
-                        // Successfully stored in Firestore
                         alert("User details stored successfully.");
                     })
                     .catch((error) => {
-                        // Error handling
                         const errorMessage = error.message;
                         document.getElementById('error-message').textContent = errorMessage;
                         console.error("Error during registration or Firestore update: ", error);
@@ -93,15 +69,26 @@
         });
     </script>
 </head>
-<br><br>
 <body>
-    <center><h1>Register</h1></center> 
-    <br>
-    <center><p>Please fill in your details to proceed</p></center>
-    <br>
-    <form id="registrationForm">
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="menu.html">Menu</a></li>
+                <li><a href="bookings.html">Bookings</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>   
+            </ul>
+        </nav>
+    </header>
+
+    <center>
+        <h1>Register</h1>
+        <p>Please fill in your details to proceed</p>
+    </center>
+    <form id="registrationForm" style="max-width: 400px; margin: 0 auto;">
         <label for="name">Name:</label>
-        <input type="text" id="name" placeholder="John"><br><br>
+        <input type="text" id="name" placeholder="John" required><br><br>
 
         <label for="surname">Surname:</label>
         <input type="text" id="surname" placeholder="Doe" required><br><br>
@@ -119,15 +106,43 @@
         <input type="password" id="confirmPassword" placeholder="confirm password" required><br><br>
 
         <button type="submit">Register</button>
-        <div class="main_btn">
-                <a href="menu.html">Order Now</a>
-                <i class="fa-solid fa-angle-right"></i>
-            </div>
     </form>
 
-    <p id="error-message" style="color:red;"></p>
+    <center>
+        <div class="error-message">
+            <a class="main_btn" href="menu.html">Order Now</a>
+            <i class="fa-solid fa-angle-right"></i>
+        </div>
+        <p id="error-message" style="color:red;"></p>
+    </center>
+
+    <style>
+        .error-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: white;
+            background-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+        .error-message.show {
+            opacity: 1;
+        }
+        .error-message.success {
+            background-color: #4CAF50;
+        }
+        .error-message.error {
+            background-color: #f44336;
+        }
+    </style>
+
+    <footer>
+        <p>&copy; 2024 Code Crafters</p>
+    </footer>
 </body>
-<footer>
-    <p>&copy; 2024 Code Crafters</p>
-</footer>
 </html>
