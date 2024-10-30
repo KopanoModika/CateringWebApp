@@ -10,7 +10,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
         const firebaseConfig = {
             apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
             authDomain: "catering-webapp.firebaseapp.com",
@@ -20,53 +22,117 @@
             appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
         };
 
+       
+
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        const db = getDatabase(app);
+
+        // Check if user is logged in
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                alert("You need to be logged in to place a booking.");
+                window.location.href = "login.html"; // Redirect to login page if not logged in
+            }
+        });
+
+        const validateDateTime = (bookingDate, bookingTime) => {
+            const currentDateTime = new Date();
+            const selectedDate = new Date(`${bookingDate}T${bookingTime}`);
+
+            if (selectedDate < currentDateTime) {
+                return "Selected date is in the past. Please choose a valid future date.";
+            }
+
+            const selectedHours = selectedDate.getHours();
+            if (selectedHours < 10 || selectedHours >= 18) {
+                return "Booking time must be between 10:00 and 18:00.";
+            }
+
+            return "";
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            document.getElementById('bookingForm').addEventListener('submit', function(event) {
                 event.preventDefault();
 
-                const name = document.getElementById('name').value;
-                const surname = document.getElementById('surname').value;
-                const phone = document.getElementById('phone').value;
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-
-                document.getElementById('error-message').textContent = '';
-
-                if (password !== confirmPassword) {
-                    document.getElementById('error-message').textContent = "Passwords do not match!";
+                const user = auth.currentUser;
+                if (!user) {
+                    document.getElementById('error-message').textContent = "Please log in to place a booking.";
                     return;
                 }
 
-                createUserWithEmailAndPassword(auth, email, password)
-                    .then((userCredential) => {
-                        alert("Registration successful!");
+                const name = document.getElementById('name').value;
+                const surname = document.getElementById('surname').value;
+                const email = document.getElementById('email').value;
+                const phone = document.getElementById('phone').value;
+                const address = document.getElementById('address').value;
+                const bookingDate = document.getElementById('date').value;
+                const bookingTime = document.getElementById('time').value;
 
-                        const user = userCredential.user;
+                document.getElementById('error-message').textContent = '';
 
-                        // Store additional user details in the 'users' collection in Firestore
-                        return setDoc(doc(collection(db, "users"), user.uid), {
-                            uid: user.uid,
-                            name: name,
-                            surname: surname,
-                            phone: phone,
-                            email: email
-                        });
-                    })
-                    .then(() => {
-                        alert("User details stored successfully.");
-                    })
-                    .catch((error) => {
-                        const errorMessage = error.message;
-                        document.getElementById('error-message').textContent = errorMessage;
-                        console.error("Error during registration or Firestore update: ", error);
-                    });
+                const validationMessage = validateDateTime(bookingDate, bookingTime);
+                if (validationMessage) {
+                    document.getElementById('error-message').textContent = validationMessage;
+                    return;
+                }
+
+                const bookingId = Date.now();
+                set(ref(db, 'bookings/' + bookingId), {
+                    userId: user.uid,
+                    name: name,
+                    surname: surname,
+                    email: email,
+                    phone: phone,
+                    address: address,
+                    bookingDate: bookingDate,
+                    bookingTime: bookingTime
+                })
+                .then(() => {
+                    alert("Booking successful!");
+                    document.getElementById('bookingForm').reset();
+                })
+                .catch((error) => {
+                    console.error("Error during booking: ", error);
+                    document.getElementById('error-message').textContent = "Error submitting booking. Please try again.";
+                });
             });
         });
+        function displayUsername() {
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            try {
+                const userDoc = await getDoc(doc(getFirestore(app), 'users', user.uid));
+                if (userDoc.exists()) {
+                    document.getElementById('usernameDisplay').textContent = userDoc.data().FirstName;
+                } else {
+                    document.getElementById('usernameDisplay').textContent = 'User not found';
+                }
+            } catch (error) {
+                console.error("Error fetching user data: ", error);
+                document.getElementById('usernameDisplay').textContent = 'Error loading username';
+            }
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'inline';
+        } else {
+            document.getElementById('usernameDisplay').textContent = 'Guest';
+            document.getElementById('loginBtn').style.display = 'inline';
+            document.getElementById('logoutBtn').style.display = 'none';
+        }
+    });
+}
+
+function logout() {
+    signOut(auth).then(() => {
+        alert("You have been logged out.");
+        window.location.href = "login.html";
+    }).catch((error) => {
+        console.error("Error signing out: ", error);
+    });
+}
+
     </script>
 </head>
 <body>
@@ -77,7 +143,10 @@
                 <li><a href="menu.html">Menu</a></li>
                 <li><a href="bookings.html">Bookings</a></li>
                 <li><a href="login.html">Login</a></li>
-                <li><a href="register.html">Register</a></li>   
+                <li><a href="register.html">Register</a></li>
+                <li><span id="usernameDisplay">Guest</span></li>
+                <li><button id="loginBtn" class="login-button">Login</button></li>
+                <li><button id="logoutBtn" class="logout-button" onclick="logout()" style="display: none;">Logout</button></li>
             </ul>
         </nav>
     </header>
@@ -107,6 +176,18 @@
 
         <button type="submit">Register</button>
     </form>
+
+    <div id="loginModal" style="display: none;">
+        <div class="modal-content">
+            <span id="closeModal" style="float: right; cursor: pointer;">&times;</span>
+            <h2>Login</h2>
+            <input type="email" id="loginEmail" placeholder="Email" required><br><br>
+            <input type="password" id="loginPassword" placeholder="Password" required><br><br>
+            <button onclick="login()">Login</button>
+            <p id="loginError" style="color: red;"></p>
+        </div>
+    </div>
+
 
     <center>
         <div class="error-message">
@@ -138,6 +219,19 @@
         }
         .error-message.error {
             background-color: #f44336;
+        }
+
+        .modal-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
         }
     </style>
 
