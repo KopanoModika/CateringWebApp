@@ -17,6 +17,7 @@
                 <li><a href="bookings.html">Bookings</a></li>
                 <li><a href="login.html">Login</a></li>
                 <li><a href="register.html">Register</a></li>
+                <li><span id="usernameDisplay">Guest</span></li>
                 <button onclick="openCart()" class="cart-btn">
                     <i class="fas fa-shopping-cart"></i> View Cart
                 </button>
@@ -178,101 +179,139 @@
 
     let cart = {};
 
-    // Check if user is logged in
+    // Check if user is logged in and display username
     auth.onAuthStateChanged(user => {
-        if (user) {
-            document.querySelectorAll(".menu_btn").forEach(btn => btn.disabled = false);
-        } else {
-            document.querySelectorAll(".menu_btn").forEach(btn => btn.disabled = true);
-        }
-    });
+            const usernameDisplay = document.getElementById("usernameDisplay");
+            const loginLink = document.getElementById("loginLink");
+            const registerLink = document.getElementById("registerLink");
 
-    function addToCart(itemName, price) {
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            if (!cart[itemName]) {
-                cart[itemName] = { quantity: 1, price };
+            if (user) {
+                // Hide login and register links
+                loginLink.style.display = "none";
+                registerLink.style.display = "none";
+
+                // Fetch user's first name from Firestore
+                firestore.collection("users").doc(user.uid).get()
+                    .then(docSnapshot => {
+                        if (docSnapshot.exists) {
+                            const firstName = docSnapshot.data().FirstName;
+                            usernameDisplay.textContent = `Hello, ${firstName}`;
+                        } else {
+                            usernameDisplay.textContent = "Hello, User";
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching user data: ", error);
+                        usernameDisplay.textContent = "Hello, User";
+                    });
             } else {
-                cart[itemName].quantity += 1;
+                // User is not logged in, show login/register links
+                loginLink.style.display = "inline";
+                registerLink.style.display = "inline";
+                usernameDisplay.textContent = "Guest";
+            }
+        });
+
+        // Add item to cart
+        function addToCart(itemName, price) {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    if (!cart[itemName]) {
+                        cart[itemName] = { quantity: 1, price };
+                    } else {
+                        cart[itemName].quantity += 1;
+                    }
+                    updateCartDisplay();
+                    updateFirebaseDatabase();
+                } else {
+                    alert("Please log in to add items to the cart.");
+                }
+            });
+        }
+
+        // Remove item from cart
+        function removeFromCart(itemName) {
+            if (cart[itemName]) {
+                cart[itemName].quantity -= 1;
+                if (cart[itemName].quantity <= 0) delete cart[itemName];
             }
             updateCartDisplay();
             updateFirebaseDatabase();
-            saveOrderToFirestore(user.uid); // Save each order by user ID in Firestore
-        } else {
-            alert("Please log in to add items to the cart.");
         }
-    });
-}
 
-    function removeFromCart(itemName) {
-        if (cart[itemName]) {
-            cart[itemName].quantity -= 1;
-            if (cart[itemName].quantity <= 0) delete cart[itemName];
+        // Update cart display in popup
+        function updateCartDisplay() {
+            const cartItems = document.getElementById("cartItems");
+            const totalAmount = document.getElementById("totalAmount");
+            cartItems.innerHTML = '';
+            let total = 0;
+
+            for (let item in cart) {
+                const { quantity, price } = cart[item];
+                total += quantity * price;
+                cartItems.innerHTML += `<li>${item} - R${price} x ${quantity}
+                                         <button onclick="removeFromCart('${item}')">remove item</button></li>`;
+            }
+
+            totalAmount.textContent = total.toFixed(2);
+            document.getElementById("checkoutButton").disabled = total === 0;
         }
-        updateCartDisplay();
-        updateFirebaseDatabase();
-        auth.currentUser && updateFirebaseDatabase(auth.currentUser.uid);
-    }
-    function updateCartDisplay() {
-    const cartItems = document.getElementById("cartItems");
-    const totalAmount = document.getElementById("totalAmount");
-    const checkoutButton = document.getElementById("checkoutButton");
-    cartItems.innerHTML = '';
-    let total = 0;
-    let hasItems = false;
 
-    for (let item in cart) {
-        const { quantity, price } = cart[item];
-        total += quantity * price;
-        hasItems = true;
-        cartItems.innerHTML += `<li>${item} - R${price} x ${quantity}
-                                 <button onclick="removeFromCart('${item}')">remove item</button></li>`;
-    }
+        // Save cart data to Firebase Realtime Database
+        function updateFirebaseDatabase() {
+            const user = auth.currentUser;
+            if (user) {
+                database.ref("cart/" + user.uid).set(cart);
+            }
+        }
 
-    totalAmount.textContent = total.toFixed(2);
-    
-    // Enable checkout button only if the cart has items
-    checkoutButton.disabled = !hasItems;
-}
+        // Save order to Firestore upon checkout
+        function saveOrderToFirestore(userId) {
+            firestore.collection("orders").add({
+                userId: userId,
+                items: cart,
+                orderDate: new Date().toISOString(),
+                status: 'Pending'
+            }).then(() => {
+                console.log("Order saved to Firestore.");
+                alert("Order placed successfully!");
+                cart = {}; // Clear the cart
+                updateCartDisplay();
+            }).catch(error => {
+                console.error("Error saving order:", error);
+            });
+        }
 
+        // Checkout function
+        function checkout() {
+            const user = auth.currentUser;
+            if (user) {
+                saveOrderToFirestore(user.uid);
+                closeCart();
+            } else {
+                alert("Please log in to proceed with checkout.");
+            }
+        }
 
-    function updateFirebaseDatabase() {
-        firebase.database().ref("cart").set(cart);
-    }
+        // Open and close cart popup
+        function openCart() {
+            document.getElementById("cartPopup").classList.add("show");
+        }
 
-    function updateFirestoreOrder(userId) {
-        firestore.collection("orders").doc(userId).set({ cart })
-            .then(() => console.log("Order saved to Firestore."))
-            .catch(error => console.error("Error saving order:", error));
-    }
-
-    function openCart() {
-        document.getElementById("cartPopup").classList.add("show");
-    }
-
-    function closeCart() {
-        document.getElementById("cartPopup").classList.remove("show");
-    }
-
-    document.getElementById("checkoutButton").onclick = function() {
-        alert("Proceeding to checkout!");
-        closeCart();
-    };
-
-    function saveOrderToFirestore(userId) {
-    // Create a new order document for each user in the Firestore orders collection
-    firebase.firestore().collection("orders").add({
-        userId: userId,        // Link the order with the user ID
-        items: cart,           // Save cart details (items, quantities, prices)
-        orderDate: new Date().toISOString(), // Include a timestamp for reference
-        status: 'Pending'      // Initial status of the order
-    }).then(() => {
-        console.log("Order saved to Firestore.");
-    }).catch(error => {
-        console.error("Error saving order:", error);
-    });
-}
+        function closeCart() {
+            document.getElementById("cartPopup").classList.remove("show");
+        }
     </script>
+
+    <style>
+        /* Add any custom CSS styling as needed */
+        .popup {
+            display: none;
+        }
+        .popup.show {
+            display: block;
+        }
+    </style>
 </body>
 <footer>
         <p>&copy; 2024 Code Crafters</p>
