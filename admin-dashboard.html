@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getDatabase, ref, get, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
+            authDomain: "catering-webapp.firebaseapp.com",
+            projectId: "catering-webapp",
+            storageBucket: "catering-webapp.appspot.com",
+            messagingSenderId: "249720880975",
+            appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a",
+            databaseURL: "https://catering-webapp-default-rtdb.firebaseio.com/"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Function to load users
+        async function loadUsers() {
+            const usersRef = ref(db, 'users/');
+            const snapshot = await get(usersRef);
+            const usersTable = document.getElementById('usersTable');
+            usersTable.innerHTML = ''; // Clear existing rows
+            snapshot.forEach(userSnapshot => {
+                const userData = userSnapshot.val();
+                const row = `<tr><td>${userSnapshot.key}</td><td>${userData.email}</td><td>${userData.phone || ''}</td></tr>`;
+                usersTable.innerHTML += row;
+            });
+        }
+
+        // Function to load bookings
+        async function loadBookings() {
+            const bookingsRef = ref(db, 'bookings/');
+            const snapshot = await get(bookingsRef);
+            const bookingsTable = document.getElementById('bookingsTable');
+            bookingsTable.innerHTML = ''; // Clear existing rows
+            snapshot.forEach(bookingSnapshot => {
+                const bookingData = bookingSnapshot.val();
+                const row = `
+                    <tr>
+                        <td>${bookingData.name}</td>
+                        <td>${bookingData.bookingDate}</td>
+                        <td>${bookingData.bookingTime}</td>
+                        <td><button onclick="confirmBooking('${bookingSnapshot.key}')">Confirm</button></td>
+                        <td><button onclick="rejectBooking('${bookingSnapshot.key}')">Reject</button></td>
+                    </tr>`;
+                bookingsTable.innerHTML += row;
+            });
+        }
+
+        // Confirm Booking
+        function confirmBooking(bookingId) {
+            const bookingRef = ref(db, 'bookings/' + bookingId);
+            update(bookingRef, { status: 'Confirmed' });
+            alert('Booking confirmed');
+            loadBookings();
+        }
+
+        // Reject Booking
+        function rejectBooking(bookingId) {
+            const bookingRef = ref(db, 'bookings/' + bookingId);
+            update(bookingRef, { status: 'Rejected' });
+            alert('Booking rejected');
+            loadBookings();
+        }
+
+        // Function to load cart items
+        async function loadCartItems() {
+            const cartRef = ref(db, 'cart/');
+            const snapshot = await get(cartRef);
+            const cartTable = document.getElementById('cartTable');
+            cartTable.innerHTML = ''; // Clear existing rows
+            snapshot.forEach(cartSnapshot => {
+                const cartData = cartSnapshot.val();
+                const row = `<tr><td>${cartData.itemName}</td><td>${cartData.quantity}</td><td>${cartData.price}</td></tr>`;
+                cartTable.innerHTML += row;
+            });
+        }
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+            loadBookings();
+            loadCartItems();
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Admin Dashboard</h1>
+    </header>
+
+    <section id="users-section">
+        <h2>Registered Users</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                </tr>
+            </thead>
+            <tbody id="usersTable"></tbody>
+        </table>
+    </section>
+
+    <section id="bookings-section">
+        <h2>Bookings</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Confirm</th>
+                    <th>Reject</th>
+                </tr>
+            </thead>
+            <tbody id="bookingsTable"></tbody>
+        </table>
+    </section>
+
+    <section id="cart-section">
+        <h2>Cart Items</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody id="cartTable"></tbody>
+        </table>
+    </section>
+</body>
+</html>
