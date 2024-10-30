@@ -6,171 +6,190 @@
     <title>Login</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
-
-    
+</head>
+<body>
     <header>
-        
         <nav>
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="menu.html">Menu</a></li>
                 <li><a href="bookings.html">Bookings</a></li>
-                <li><a href="login.html">Login</a></li>
-                <li><a href="register.html">Register</a></li>
+                <li><button id="loginBtn" class="login-button">Login</button></li>
+                <li><button id="logoutBtn" class="logout-button" onclick="logout()" style="display: none;">Logout</button></li>
             </ul>
         </nav>
+        <p>Welcome, <span id="usernameDisplay">Guest</span></p>
     </header>
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-        // Your Firebase configuration (Replace with your credentials)
+    <center>
+        <h1>Login</h1>
+        <p>To proceed, please log in with your existing credentials</p>
+    </center>
+
+    <form id="loginForm" style="max-width: 400px; margin: 0 auto;">
+        <label for="email">Email:</label>
+        <input type="email" id="email" placeholder="someone@example.com" required><br><br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="******" required><br><br>
+
+        <button type="submit">Login</button><br><br>
+        <p>Don't have an account?</p>
+        <button type="button" onclick="window.location.href='register.html'">Create an Account</button>
+    </form>
+
+    <!-- Notification Bubble -->
+    <div id="notification-bubble" class="notification-bubble"></div>
+
+    <footer>
+        <p>&copy; 2024 Code Crafters</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
-            authDomain: "catering-webapp.firebaseapp.com",
-            projectId: "catering-webapp",
-            storageBucket: "catering-webapp.appspot.com",
-            messagingSenderId: "249720880975",
-            appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
+        authDomain: "catering-webapp.firebaseapp.com",
+        databaseURL: "https://catering-webapp-default-rtdb.firebaseio.com",
+        projectId: "catering-webapp",
+        storageBucket: "catering-webapp.appspot.com",
+        messagingSenderId: "249720880975",
+        appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
         };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        // Function to handle login
+        // Function to show notification
+        function showNotification(message, isSuccess) {
+            const bubble = document.getElementById('notification-bubble');
+            bubble.textContent = message;
+            bubble.classList.add('show');
+            bubble.classList.toggle('success', isSuccess);
+            bubble.classList.toggle('error', !isSuccess);
+
+            // Hide the bubble after 3 seconds
+            setTimeout(() => {
+                bubble.classList.remove('show');
+            }, 3000);
+        }
+
+        // Function to handle login errors
+        function getErrorMessage(errorCode) {
+            switch (errorCode) {
+                case "auth/invalid-email":
+                    return "The email address is badly formatted.";
+                case "auth/user-disabled":
+                    return "This user account has been disabled.";
+                case "auth/user-not-found":
+                    return "No user found with this email.";
+                case "auth/wrong-password":
+                    return "The password is incorrect. Please try again.";
+                default:
+                    return "An unknown error occurred. Please try again.";
+            }
+        }
+
+        // Display username if logged in
+        function displayUsername() {
+            onAuthStateChanged(auth, user => {
+                const loginBtn = document.getElementById("loginBtn");
+                const logoutBtn = document.getElementById("logoutBtn");
+
+                if (user) {
+                    loginBtn.style.display = "none";
+                    logoutBtn.style.display = "inline";
+
+                    // Fetch user's first name from Firestore
+                    const userDocRef = doc(db, 'users', user.uid); 
+                    getDoc(userDocRef)
+                        .then(docSnapshot => {
+                            if (docSnapshot.exists()) {
+                                const firstName = docSnapshot.data().FirstName;
+                                document.getElementById('usernameDisplay').textContent = firstName;
+                            } else {
+                                document.getElementById('usernameDisplay').textContent = 'User';
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error fetching user data: ", error);
+                            document.getElementById('usernameDisplay').textContent = 'Error loading username';
+                        });
+                } else {
+                    loginBtn.style.display = "inline";
+                    logoutBtn.style.display = "none";
+                    document.getElementById('usernameDisplay').textContent = 'Guest';
+                }
+            });
+        }
+
+        // Logout function
+        function logout() {
+            signOut(auth).then(() => {
+                showNotification("Logged out successfully!", true);
+                document.getElementById('usernameDisplay').textContent = 'Guest';
+            }).catch((error) => {
+                showNotification("Error: " + error.message, false);
+                console.error("Error during logout: ", error);
+            });
+        }
+
+        // Login form submission
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('loginForm').addEventListener('submit', function(event) {
-                event.preventDefault(); // Prevent form from submitting
+            displayUsername();
 
-                // Get form values
+            document.getElementById('loginForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
 
-                // Clear any previous error message
-                document.getElementById('error-message').textContent = '';
-
-                // Authenticate user using Firebase
                 signInWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
-                        // Login successful
-                        alert("Login successful!");
-                        const user = userCredential.user;
-                        console.log("User logged in: ", user);
-                        // Optionally, redirect to another page (e.g., a dashboard)
-                        // window.location.href = "dashboard.html";
+                        showNotification("Login successful!", true);
+                        console.log("User logged in: ", userCredential.user);
+                        setTimeout(() => {
+                            window.location.href = "menu.html";
+                        }, 1500);
                     })
                     .catch((error) => {
-                        // Error during login
-                        const errorMessage = error.message;
-                        document.getElementById('error-message').textContent = errorMessage;
+                        const errorMessage = getErrorMessage(error.code);
+                        showNotification("Error: " + errorMessage, false);
                         console.error("Error during login: ", error);
                     });
             });
         });
-
-        // Function to show notification bubble
-function showNotification(message, isSuccess) {
-    const bubble = document.getElementById('notification-bubble');
-    bubble.textContent = message;
-    bubble.classList.add('show');
-    bubble.classList.toggle('success', isSuccess);
-    bubble.classList.toggle('error', !isSuccess);
-
-    // Hide the bubble after 3 seconds
-    setTimeout(() => {
-        bubble.classList.remove('show');
-    }, 3000);
-}
-
-// Handle login and show results in bubble
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('loginForm').addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent form from submitting
-
-        // Get form values
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
-        // Authenticate user using Firebase
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
-                // Show success bubble
-                showNotification("Login successful!", true);
-                const user = userCredential.user;
-                console.log("User logged in: ", user);
-                // Optionally, redirect to another page (e.g., a dashboard)
-                // window.location.href = "dashboard.html";
-            })
-            .catch((error) => {
-                // Show error bubble
-                showNotification("Error: " + error.message, false);
-                console.error("Error during login: ", error);
-            });
-    });
-});
-
     </script>
-</head>
-<body>
-    <br><br>
-    <center><h1>Login</h1></center>
-    <br>
-    <center><p>To proceed, please log in with your already existing credentials</p></center>
-    <br>
-    <form id="loginForm">
-        <label for="email" >Email:</label>
-        <input type="email" id="email" placeholder="someone@example.com" required><br><br>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" placeholder="******"><br><br>
-
-        <button type="submit">Login</button>
-        <br><br>
-        <p>Don't have an account?</p>
-        <button onclick="window.location.href='register.html'" >
-            Create an Account
-        </button>
-    </form>
-    <div style="margin-top: 20px; text-align: center;">
-        
-       
-    </div>
-
-    <!-- HTML for Notification Bubble -->
-   <div id="notification-bubble" class="notification-bubble">
-     <p id="error-message" style="color:red;"></p>
-   </div>
-   
-   <style>
-    .notification-bubble {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 15px;
-        border-radius: 8px;
-        font-size: 14px;
-        color: white;
-        background-color: #333;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        z-index: 1000;
-    }
-    .notification-bubble.show {
-        opacity: 1;
-    }
-    .notification-bubble.success {
-        background-color: #4CAF50;
-    }
-    .notification-bubble.error {
-        background-color: #f44336;
-    }
-</style>
+    <style>
+        .notification-bubble {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: white;
+            background-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+        .notification-bubble.show {
+            opacity: 1;
+        }
+        .notification-bubble.success {
+            background-color: #4CAF50;
+        }
+        .notification-bubble.error {
+            background-color: #f44336;
+        }
+    </style>
 </body>
-<br><br><br><br><br><br>
-<footer>
-    <p>&copy; 2024 Code Crafters</p>
-</footer>
 </html>
