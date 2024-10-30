@@ -14,8 +14,7 @@
                 <li><a href="index.html">Home</a></li>
                 <li><a href="menu.html">Menu</a></li>
                 <li><a href="bookings.html">Bookings</a></li>
-                <li><button id="loginBtn" class="login-button">Login</button></li>
-                <li><button id="logoutBtn" class="logout-button" onclick="logout()" style="display: none;">Logout</button></li>
+               
             </ul>
         </nav>
         <p>Welcome, <span id="usernameDisplay">Guest</span></p>
@@ -96,53 +95,6 @@
             }
         }
 
-        // Display username if logged in
-        function displayUsername() {
-            onAuthStateChanged(auth, user => {
-                const loginBtn = document.getElementById("loginBtn");
-                const logoutBtn = document.getElementById("logoutBtn");
-
-                if (user) {
-                    loginBtn.style.display = "none";
-                    logoutBtn.style.display = "inline";
-
-                    // Fetch user's first name from Firestore
-                    const userDocRef = doc(db, 'users', user.uid); 
-                    getDoc(userDocRef)
-                        .then(docSnapshot => {
-                            if (docSnapshot.exists()) {
-                                const firstName = docSnapshot.data().FirstName;
-                                document.getElementById('usernameDisplay').textContent = firstName;
-                            } else {
-                                document.getElementById('usernameDisplay').textContent = 'User';
-                            }
-                        })
-                        .catch(error => {
-                            console.error("Error fetching user data: ", error);
-                            document.getElementById('usernameDisplay').textContent = 'Error loading username';
-                        });
-                } else {
-                    loginBtn.style.display = "inline";
-                    logoutBtn.style.display = "none";
-                    document.getElementById('usernameDisplay').textContent = 'Guest';
-                }
-            });
-        }
-
-        // Logout function
-        function logout() {
-            signOut(auth).then(() => {
-                showNotification("Logged out successfully!", true);
-                document.getElementById('usernameDisplay').textContent = 'Guest';
-            }).catch((error) => {
-                showNotification("Error: " + error.message, false);
-                console.error("Error during logout: ", error);
-            });
-        }
-
-        // Login form submission
-        document.addEventListener('DOMContentLoaded', () => {
-            displayUsername();
 
             document.getElementById('loginForm').addEventListener('submit', function(event) {
                 event.preventDefault();
