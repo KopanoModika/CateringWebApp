@@ -188,21 +188,21 @@
     });
 
     function addToCart(itemName, price) {
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                if (!cart[itemName]) {
-                    cart[itemName] = { quantity: 1, price };
-                } else {
-                    cart[itemName].quantity += 1;
-                }
-                updateCartDisplay();
-                updateFirebaseDatabase();
-                updateFirebaseDatabase(user.uid);
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            if (!cart[itemName]) {
+                cart[itemName] = { quantity: 1, price };
             } else {
-                alert("Please log in to add items to the cart.");
+                cart[itemName].quantity += 1;
             }
-        });
-    }
+            updateCartDisplay();
+            updateFirebaseDatabase();
+            saveOrderToFirestore(user.uid); // Save each order by user ID in Firestore
+        } else {
+            alert("Please log in to add items to the cart.");
+        }
+    });
+}
 
     function removeFromCart(itemName) {
         if (cart[itemName]) {
@@ -258,6 +258,20 @@
         alert("Proceeding to checkout!");
         closeCart();
     };
+
+    function saveOrderToFirestore(userId) {
+    // Create a new order document for each user in the Firestore orders collection
+    firebase.firestore().collection("orders").add({
+        userId: userId,        // Link the order with the user ID
+        items: cart,           // Save cart details (items, quantities, prices)
+        orderDate: new Date().toISOString(), // Include a timestamp for reference
+        status: 'Pending'      // Initial status of the order
+    }).then(() => {
+        console.log("Order saved to Firestore.");
+    }).catch(error => {
+        console.error("Error saving order:", error);
+    });
+}
     </script>
 </body>
 <footer>

@@ -6,6 +6,7 @@
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <script type="module">
+        
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
         import { getDatabase, ref, get, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
@@ -94,11 +95,49 @@
             loadBookings();
             loadCartItems();
         });
+
+        firebase.firestore().collection("orders").get()
+    .then((snapshot) => {
+        snapshot.forEach((doc) => {
+            const order = doc.data();
+            const userId = order.userId;
+
+            // Fetch user details (e.g., username) from users collection
+            firebase.firestore().collection("users").doc(userId).get()
+                .then((userDoc) => {
+                    const username = userDoc.data().username || "Unknown User";
+                    
+                    // Populate order data in the admin table
+                    const orderRow = `
+                        <tr>
+                            <td>${doc.id}</td>
+                            <td>${username}</td>
+                            <td>${Object.entries(order.items).map(([item, details]) => `${item} x ${details.quantity}`).join(', ')}</td>
+                            <td>R${Object.values(order.items).reduce((total, item) => total + (item.price * item.quantity), 0)}</td>
+                            <td>${order.status}</td>
+                            <td>${new Date(order.orderDate).toLocaleDateString()}</td>
+                        </tr>`;
+                    
+                    document.querySelector("#ordersTable tbody").innerHTML += orderRow;
+                });
+        });
+    }).catch(error => {
+        console.error("Error loading orders:", error);
+    });
     </script>
 </head>
 <body>
     <header>
         <h1>Admin Dashboard</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="menu.html">Menu</a></li>
+                <li><a href="bookings.html">Bookings</a></li>
+                <li><a href="login.html">Login</a></li>
+                <li><a href="register.html">Register</a></li>
+            </ul>
+        </nav>
     </header>
 
     <section id="users-section">
