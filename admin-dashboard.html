@@ -5,126 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <script type="module">
-        
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getDatabase, ref, get, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
-            authDomain: "catering-webapp.firebaseapp.com",
-            projectId: "catering-webapp",
-            storageBucket: "catering-webapp.appspot.com",
-            messagingSenderId: "249720880975",
-            appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a",
-            databaseURL: "https://catering-webapp-default-rtdb.firebaseio.com/"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // Function to load users
-        async function loadUsers() {
-            const usersRef = ref(db, 'users/');
-            const snapshot = await get(usersRef);
-            const usersTable = document.getElementById('usersTable');
-            usersTable.innerHTML = ''; // Clear existing rows
-            snapshot.forEach(userSnapshot => {
-                const userData = userSnapshot.val();
-                const row = `<tr><td>${userSnapshot.key}</td><td>${userData.email}</td><td>${userData.phone || ''}</td></tr>`;
-                usersTable.innerHTML += row;
-            });
-        }
-
-        // Function to load bookings
-        async function loadBookings() {
-            const bookingsRef = ref(db, 'bookings/');
-            const snapshot = await get(bookingsRef);
-            const bookingsTable = document.getElementById('bookingsTable');
-            bookingsTable.innerHTML = ''; // Clear existing rows
-            snapshot.forEach(bookingSnapshot => {
-                const bookingData = bookingSnapshot.val();
-                const row = `
-                    <tr>
-                        <td>${bookingData.name}</td>
-                        <td>${bookingData.bookingDate}</td>
-                        <td>${bookingData.bookingTime}</td>
-                        <td><button onclick="confirmBooking('${bookingSnapshot.key}')">Confirm</button></td>
-                        <td><button onclick="rejectBooking('${bookingSnapshot.key}')">Reject</button></td>
-                    </tr>`;
-                bookingsTable.innerHTML += row;
-            });
-        }
-
-        // Confirm Booking
-        function confirmBooking(bookingId) {
-            const bookingRef = ref(db, 'bookings/' + bookingId);
-            update(bookingRef, { status: 'Confirmed' });
-            alert('Booking confirmed');
-            loadBookings();
-        }
-
-        // Reject Booking
-        function rejectBooking(bookingId) {
-            const bookingRef = ref(db, 'bookings/' + bookingId);
-            update(bookingRef, { status: 'Rejected' });
-            alert('Booking rejected');
-            loadBookings();
-        }
-
-        // Function to load cart items
-        async function loadCartItems() {
-            const cartRef = ref(db, 'cart/');
-            const snapshot = await get(cartRef);
-            const cartTable = document.getElementById('cartTable');
-            cartTable.innerHTML = ''; // Clear existing rows
-            snapshot.forEach(cartSnapshot => {
-                const cartData = cartSnapshot.val();
-                const row = `<tr><td>${cartData.itemName}</td><td>${cartData.quantity}</td><td>${cartData.price}</td></tr>`;
-                cartTable.innerHTML += row;
-            });
-        }
-
-        // Load data on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadUsers();
-            loadBookings();
-            loadCartItems();
-        });
-
-        firebase.firestore().collection("orders").get()
-    .then((snapshot) => {
-        snapshot.forEach((doc) => {
-            const order = doc.data();
-            const userId = order.userId;
-
-            // Fetch user details (e.g., username) from users collection
-            firebase.firestore().collection("users").doc(userId).get()
-                .then((userDoc) => {
-                    const username = userDoc.data().username || "Unknown User";
-                    
-                    // Populate order data in the admin table
-                    const orderRow = `
-                        <tr>
-                            <td>${doc.id}</td>
-                            <td>${username}</td>
-                            <td>${Object.entries(order.items).map(([item, details]) => `${item} x ${details.quantity}`).join(', ')}</td>
-                            <td>R${Object.values(order.items).reduce((total, item) => total + (item.price * item.quantity), 0)}</td>
-                            <td>${order.status}</td>
-                            <td>${new Date(order.orderDate).toLocaleDateString()}</td>
-                        </tr>`;
-                    
-                    document.querySelector("#ordersTable tbody").innerHTML += orderRow;
-                });
-        });
-    }).catch(error => {
-        console.error("Error loading orders:", error);
-    });
-    </script>
 </head>
 <body>
     <header>
@@ -148,10 +28,13 @@
                     <th>User ID</th>
                     <th>Email</th>
                     <th>Phone</th>
+                    <th>Details</th>
+                    <th>Remove</th>
                 </tr>
             </thead>
             <tbody id="usersTable"></tbody>
         </table>
+        <div id="userDetails"></div> <!-- To display user details -->
     </section>
 
     <section id="bookings-section">
@@ -162,6 +45,7 @@
                     <th>Name</th>
                     <th>Date</th>
                     <th>Time</th>
+                    <th>Status</th>
                     <th>Confirm</th>
                     <th>Reject</th>
                 </tr>
@@ -170,18 +54,127 @@
         </table>
     </section>
 
-    <section id="cart-section">
-        <h2>Cart Items</h2>
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Item Name</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                </tr>
-            </thead>
-            <tbody id="cartTable"></tbody>
-        </table>
-    </section>
+    <!-- Place your script at the end of the body -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getDatabase, ref, get, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+        import { getFirestore, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+           apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
+        authDomain: "catering-webapp.firebaseapp.com",
+        databaseURL: "https://catering-webapp-default-rtdb.firebaseio.com",
+        projectId: "catering-webapp",
+        storageBucket: "catering-webapp.appspot.com",
+        messagingSenderId: "249720880975",
+        appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const firestore = getFirestore(app);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+            loadBookings();
+        });
+
+        // Function to load users from Realtime Database
+        async function loadUsers() {
+            const usersRef = ref(db, 'users/');
+            const snapshot = await get(usersRef);
+            const usersTable = document.getElementById('usersTable');
+            usersTable.innerHTML = ''; // Clear existing rows
+            snapshot.forEach(userSnapshot => {
+                const userData = userSnapshot.val();
+                const row = `
+                    <tr>
+                        <td>${userSnapshot.key}</td>
+                        <td>${userData.email}</td>
+                        <td>${userData.phone || ''}</td>
+                        <td><button onclick="viewUserDetails('${userSnapshot.key}')">View Details</button></td>
+                        <td><button onclick="removeUser('${userSnapshot.key}')">Remove</button></td>
+                    </tr>`;
+                usersTable.innerHTML += row;
+            });
+        }
+
+        // Function to view user details from both Firestore and Realtime Database
+        async function viewUserDetails(userId) {
+            const firestoreRef = doc(firestore, "users", userId);
+            const realtimeRef = ref(db, 'users/' + userId);
+
+            const firestoreSnapshot = await getDoc(firestoreRef);
+            const realtimeSnapshot = await get(realtimeRef);
+
+            let details = `<h3>User Details for ${userId}</h3><ul>`;
+
+            // Append Firestore data if available
+            if (firestoreSnapshot.exists()) {
+                details += `<li><strong>Firestore Data:</strong> ${JSON.stringify(firestoreSnapshot.data())}</li>`;
+            } else {
+                details += `<li>No Firestore data available</li>`;
+            }
+
+            // Append Realtime Database data if available
+            if (realtimeSnapshot.exists()) {
+                details += `<li><strong>Realtime Database Data:</strong> ${JSON.stringify(realtimeSnapshot.val())}</li>`;
+            } else {
+                details += `<li>No Realtime Database data available</li>`;
+            }
+
+            details += "</ul>";
+            document.getElementById("userDetails").innerHTML = details;
+        }
+
+        // Function to remove a user from both Firestore and Realtime Database
+        async function removeUser(userId) {
+            if (confirm("Are you sure you want to delete this user?")) {
+                await deleteDoc(doc(firestore, "users", userId));
+                await remove(ref(db, 'users/' + userId));
+                alert("User removed successfully.");
+                loadUsers();
+            }
+        }
+
+        // Function to load bookings from Realtime Database
+        async function loadBookings() {
+            const bookingsRef = ref(db, 'bookings/');
+            const snapshot = await get(bookingsRef);
+            const bookingsTable = document.getElementById('bookingsTable');
+            bookingsTable.innerHTML = ''; // Clear existing rows
+            snapshot.forEach(bookingSnapshot => {
+                const bookingData = bookingSnapshot.val();
+                const row = `
+                    <tr>
+                        <td>${bookingData.name}</td>
+                        <td>${bookingData.bookingDate}</td>
+                        <td>${bookingData.bookingTime}</td>
+                        <td>${bookingData.status || 'Pending'}</td>
+                        <td><button onclick="confirmBooking('${bookingSnapshot.key}')">Confirm</button></td>
+                        <td><button onclick="rejectBooking('${bookingSnapshot.key}')">Reject</button></td>
+                    </tr>`;
+                bookingsTable.innerHTML += row;
+            });
+        }
+
+        // Confirm booking
+        function confirmBooking(bookingId) {
+            const bookingRef = ref(db, 'bookings/' + bookingId);
+            update(bookingRef, { status: 'Confirmed' });
+            alert('Booking confirmed');
+            loadBookings();
+        }
+
+        // Reject booking
+        function rejectBooking(bookingId) {
+            const bookingRef = ref(db, 'bookings/' + bookingId);
+            update(bookingRef, { status: 'Rejected' });
+            alert('Booking rejected');
+            loadBookings();
+        }
+    </script>
 </body>
 </html>
