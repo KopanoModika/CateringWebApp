@@ -13,11 +13,12 @@
 
         const firebaseConfig = {
             apiKey: "AIzaSyDpqm4ffkFpNpzleTRQd3vEUGY7XDTo6_g",
-            authDomain: "catering-webapp.firebaseapp.com",
-            projectId: "catering-webapp",
-            storageBucket: "catering-webapp.appspot.com",
-            messagingSenderId: "249720880975",
-            appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
+        authDomain: "catering-webapp.firebaseapp.com",
+        databaseURL: "https://catering-webapp-default-rtdb.firebaseio.com",
+        projectId: "catering-webapp",
+        storageBucket: "catering-webapp.appspot.com",
+        messagingSenderId: "249720880975",
+        appId: "1:249720880975:web:cb520c4f8b9bdb92fc8f3a"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -28,24 +29,46 @@
             document.getElementById('registrationForm').addEventListener('submit', function(event) {
                 event.preventDefault();
 
-                const name = document.getElementById('name').value;
-                const surname = document.getElementById('surname').value;
-                const phone = document.getElementById('phone').value;
-                const email = document.getElementById('email').value;
+                const name = document.getElementById('name').value.trim();
+                const surname = document.getElementById('surname').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const email = document.getElementById('email').value.trim();
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirmPassword').value;
+                const errorMessage = document.getElementById('error-message');
 
-                document.getElementById('error-message').textContent = '';
+                // Clear previous error message
+                errorMessage.textContent = '';
+                errorMessage.classList.remove('show', 'success', 'error');
 
+                // Validate each field and display the first relevant error message only
+                if (!/^[a-zA-Z]+$/.test(name)) {
+                    displayError("Please enter a valid name (only letters).");
+                    return;
+                }
+                if (!/^[a-zA-Z]+$/.test(surname)) {
+                    displayError("Please enter a valid surname (only letters).");
+                    return;
+                }
+                if (!/^\d{3} \d{3} \d{4}$/.test(phone)) {
+                    displayError("Please enter a valid phone number (format: *** *** ****).");
+                    return;
+                }
+                if (!/^\S+@\S+\.\S+$/.test(email)) {
+                    displayError("Please enter a valid email address.");
+                    return;
+                }
+                if (password.length < 6) {
+                    displayError("Password must be at least 6 characters long.");
+                    return;
+                }
                 if (password !== confirmPassword) {
-                    document.getElementById('error-message').textContent = "Passwords do not match!";
+                    displayError("Passwords do not match!");
                     return;
                 }
 
                 createUserWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
-                        alert("Registration successful!");
-
                         const user = userCredential.user;
 
                         // Store additional user details in the 'users' collection in Firestore
@@ -58,15 +81,31 @@
                         });
                     })
                     .then(() => {
-                        alert("User details stored successfully.");
+                        displaySuccess("Registration successful! Redirecting to login...");
+                        setTimeout(() => {
+                            window.location.href = "login.html";
+                        }, 1500);
                     })
                     .catch((error) => {
-                        const errorMessage = error.message;
-                        document.getElementById('error-message').textContent = errorMessage;
-                        console.error("Error during registration or Firestore update: ", error);
+                        displayError("Error: " + error.message);
+                        console.error("Error during registration or Firestore update:", error);
                     });
             });
         });
+
+        // Display error message
+        function displayError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show', 'error');
+        }
+
+        // Display success message
+        function displaySuccess(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show', 'success');
+        }
     </script>
 </head>
 <body>
@@ -86,6 +125,7 @@
         <h1>Register</h1>
         <p>Please fill in your details to proceed</p>
     </center>
+    
     <form id="registrationForm" style="max-width: 400px; margin: 0 auto;">
         <label for="name">Name:</label>
         <input type="text" id="name" placeholder="John" required><br><br>
@@ -94,7 +134,7 @@
         <input type="text" id="surname" placeholder="Doe" required><br><br>
 
         <label for="phone">Phone Number:</label>
-        <input type="tel" id="phone" placeholder="*** *** 4652" required><br><br>
+        <input type="tel" id="phone" placeholder="*** *** ****" required><br><br>
 
         <label for="email">Email:</label>
         <input type="email" id="email" placeholder="someone@example.com" required><br><br>
@@ -108,27 +148,24 @@
         <button type="submit">Register</button>
     </form>
 
-    <center>
-        <div class="error-message">
-            <a class="main_btn" href="menu.html">Order Now</a>
-            <i class="fa-solid fa-angle-right"></i>
-        </div>
-        <p id="error-message" style="color:red;"></p>
-    </center>
+    <p id="error-message" class="error-message"></p>
+
+    <footer>
+        <p>&copy; 2024 Code Crafters</p>
+    </footer>
 
     <style>
+        /* Error Message Styling */
         .error-message {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px;
+            margin-top: 20px;
+            color: white;
+            text-align: center;
+            padding: 10px;
             border-radius: 8px;
             font-size: 14px;
-            color: white;
-            background-color: #333;
+            width: 100%;
             opacity: 0;
             transition: opacity 0.3s ease;
-            z-index: 1000;
         }
         .error-message.show {
             opacity: 1;
@@ -140,9 +177,5 @@
             background-color: #f44336;
         }
     </style>
-
-    <footer>
-        <p>&copy; 2024 Code Crafters</p>
-    </footer>
 </body>
 </html>
