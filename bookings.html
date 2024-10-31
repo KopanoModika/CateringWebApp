@@ -53,8 +53,8 @@
 
             // Ensure time is between 10:00 and 18:00
             const selectedHours = selectedDate.getHours();
-            if (selectedHours < 10 || selectedHours >= 18) {
-                return "Booking time must be between 10:00 and 18:00.";
+            if (selectedHours < 8 || selectedHours >= 17) {
+                return "Booking time must be between 08:00 and 17:00.";
             }
 
             return ""; // Return empty string if everything is valid
