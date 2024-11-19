@@ -1,9 +1,0 @@
-{
-  "zenMode.centerLayout": true,
-  "zenMode.fullScreen": true,
-  "zenMode.hideActivityBar": true,
-  "zenMode.hideStatusBar": true,
-  "zenMode.restore": true,
-  "zenMode.showTabs": "multiple",
-  "editor.suggest.localityBonus": false
-}

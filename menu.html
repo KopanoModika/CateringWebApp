@@ -301,6 +301,24 @@
         function closeCart() {
             document.getElementById("cartPopup").classList.remove("show");
         }
+        document.getElementById("checkoutButton").onclick = function() {
+        alert("Order successfully placed!");
+        closeCart();
+    };
+
+    function clearCart() {
+    cart = {}; // Reset the cart object
+    updateCartDisplay(); // Update the cart display to reflect empty cart
+    
+    const user = auth.currentUser;
+    if (user) {
+        // Clear the cart data from Firebase
+        database.ref("cart/" + user.uid).remove()
+            .then(() => console.log("Cart data cleared from Firebase"))
+            .catch(error => console.error("Error clearing cart data:", error));
+    }
+};
+
     </script>
 
     <style>
