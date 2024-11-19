@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="menu.html">Menu</a></li>
+                <li><a href="bookings.html">Bookings</a></li>
+                <li><a href="login.html">User Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="form-section">
+        <h2>Admin Login</h2>
+        <form id="adminLoginForm">
+            <label for="admin-email">Admin Email:</label>
+            <input type="email" id="admin-email" placeholder="admin@example.com" required>
+            
+            <label for="admin-password">Password:</label>
+            <input type="password" id="admin-password" placeholder="******" required>
+            
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <!-- Notification Bubble -->
+    <div id="notification-bubble" class="notification-bubble"></div>
+
+    <br><br><br><br>
+    <footer>
+        <p>&copy; 2024 Code Crafters</p>
+    </footer>
+
+    <script>
+        // Default admin credentials
+        const defaultAdmin = {
+            email: "admin@example.com",
+            password: "admin123"
+        };
+
+        // Function to show notification
+        function showNotification(message, isSuccess) {
+            const bubble = document.getElementById('notification-bubble');
+            bubble.textContent = message;
+            bubble.classList.add('show');
+            bubble.classList.toggle('success', isSuccess);
+            bubble.classList.toggle('error', !isSuccess);
+
+            // Hide the bubble after 3 seconds
+            setTimeout(() => {
+                bubble.classList.remove('show');
+            }, 3000);
+        }
+
+        // Handle admin login
+        document.getElementById('adminLoginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('admin-email').value;
+            const password = document.getElementById('admin-password').value;
+
+            // Check for default admin credentials
+            if (email === defaultAdmin.email && password === defaultAdmin.password) {
+                showNotification("Admin login successful!", true);
+                console.log("Default admin logged in.");
+                setTimeout(() => {
+                    window.location.href = "admin-dashboard.html"; // Redirect to admin dashboard
+                }, 1500);
+            } else {
+                showNotification("Invalid admin credentials. Please try again.", false);
+            }
+        });
+    </script>
+
+    <style>
+        .notification-bubble {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: white;
+            background-color: #333;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+        .notification-bubble.show {
+            opacity: 1;
+        }
+        .notification-bubble.success {
+            background-color: #4CAF50;
+        }
+        .notification-bubble.error {
+            background-color: #f44336;
+        }
+    </style>
+</body>
+</html>
